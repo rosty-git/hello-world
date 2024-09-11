@@ -1,0 +1,36 @@
+volumes:
+  mariadb-data:
+
+services:
+  mariadb:
+    image: mariadb:11.5.2
+    restart: unless-stopped
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: "7KtscQahk%pkM!!X"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+  
+  laravel:
+    image: serversideup/php:8.3-unit
+    restart: unless-stopped
+    environment:
+      AUTORUN_ENABLED: "true"
+      SSL_MODE: "off"
+      PHP_OPCACHE_ENABLE: "1"
+    env_file: .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      mariadb:
+        condition: service_healthy
